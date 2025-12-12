@@ -668,7 +668,7 @@
                                 } else {
                                     resolve(false);
                                 }
-                            }, 'image/jpeg', 0.9);
+                            }, 'image/webp', 0.9);
 
                         } catch (error) {
                             reject(error);
@@ -738,7 +738,7 @@
         function showPreview(blob, fileName, index, total) {
             return new Promise((resolve) => {
                 currentBlob = blob;
-                currentFileName = `${fileName}_${selectedCropType}.jpg`;
+                currentFileName = `${fileName}_${selectedCropType}.webp`;
                 currentIndex = index;
                 totalFiles = total;
                 resolvePreview = resolve;

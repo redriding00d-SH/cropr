@@ -29,7 +29,7 @@ python crop_headshot.py --input ./photos --output ./headshots
 ## Technical Details
 
 - **Face Detection**: face-api.js TinyFaceDetector
-- **Output**: 700×850 JPEG (web) / WebP (CLI)
+- **Output**: 700×850 WebP (90% quality)
 - **Privacy**: Client-side processing, no uploads
 
 ## License
