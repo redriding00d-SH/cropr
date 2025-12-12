@@ -1,0 +1,22 @@
+# Environment variables
+.env
+config.js
+
+# API Keys
+**/api-key.txt
+**/*-key.txt
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

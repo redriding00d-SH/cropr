@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropR - Profile Photo Batch Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow: auto;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            transform: scale(0.85);
+            transform-origin: top center;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: auto;
+            height: 120px;
+            max-width: 100%;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 100;
+            letter-spacing: 0.05em;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.5rem;
+        }
+
+        .refresh-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #ffffff;
+            transition: opacity 0.2s;
+            padding: 0;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.7;
+        }
+
+        .refresh-icon {
+            width: 40px;
+            height: 40px;
+            color: #7c3fed;
+        }
+
+        .refresh-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: transparent;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 0.875rem;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 0.875rem;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            flex: 1;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0.875rem 1.5rem;
+            background: transparent;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.7);
+            transition: border-color 0.2s;
+        }
+
+        .file-input-label:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.5rem;
+        }
+
+        .file-size {
+            margin-left: auto;
+            padding-left: 1rem;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .process-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.875rem 1.75rem;
+            background: #7c3fed;
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            box-shadow: 0 4px 20px rgba(124, 63, 237, 0.3);
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+
+        .process-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Crop Options */
+        .crop-options {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .crop-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .crop-option:hover {
+            transform: translateY(-3px);
+        }
+
+        .crop-preview {
+            width: 120px;
+            height: 145px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s, border-width 0.2s;
+            position: relative;
+            background: transparent;
+        }
+
+        .crop-option.selected .crop-preview {
+            border: 4px solid #7c3fed;
+            box-shadow: 0 0 20px rgba(124, 63, 237, 0.4);
+        }
+
+        .crop-preview.portrait {
+            border-radius: 0;
+        }
+
+        .crop-label {
+            font-size: 1rem;
+            font-weight: 400;
+            text-align: center;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Preview Modal */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .preview-modal.active {
+            display: flex;
+        }
+
+        .preview-content {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.25rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-image-container {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 6px;
+        }
+
+        .preview-info {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .preview-btn {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .approve-btn {
+            background: #7c3fed;
+            color: #fff;
+        }
+
+        .approve-btn:hover {
+            background: #6b2fd1;
+            transform: translateY(-2px);
+        }
+
+        .reject-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .reject-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                flex-direction: column;
+            }
+
+            .process-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .logo-icon {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <button class="refresh-btn" onclick="location.reload()">
+                <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 10C21 10 18.995 7.26822 17.3662 5.63824C15.7373 4.00827 13.4864 3 11 3C6.02944 3 2 7.02944 2 12C2 16.9706 6.02944 21 11 21C15.1031 21 18.5649 18.2543 19.6482 14.5M21 10V4M21 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="refresh-text">Refresh</span>
+            </button>
+
+            <div class="logo-section">
+                <!-- Logo Icon -->
+                <div class="logo-icon">
+                    <img src="assets/logos.png" alt="CropR Logo">
+                </div>
+                <h1 class="title">CropR</h1>
+                <div class="subtitle">version 1.1</div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="file-input-label">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span id="fileInputText">Select files to upload</span>
+                </label>
+                <input type="file" id="fileInput" multiple accept="image/*">
+            </div>
+            <button class="process-btn" onclick="processImages()">
+                Process images
+            </button>
+        </div>
+
+        <!-- Crop Options -->
+        <div class="crop-options">
+            <div class="crop-option selected" data-crop-type="portrait" onclick="selectCropType(this)">
+                <div class="crop-preview portrait"></div>
+                <div class="crop-label">700 × 850<br>Portrait</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <div class="preview-title">Preview Cropped Image</div>
+                <button class="close-btn" onclick="closePreview()">×</button>
+            </div>
+            <div class="preview-image-container">
+                <img id="previewImage" class="preview-image" alt="Preview">
+            </div>
+            <div class="preview-info" id="previewInfo"></div>
+            <div class="preview-actions">
+                <button class="preview-btn reject-btn" onclick="rejectImage()">✗ Reject</button>
+                <button class="preview-btn approve-btn" onclick="approveImage()">✓ Approve & Download</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- face-api.js for face detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
+    <script>
+        // ========================================
+        // GLOBALS
+        // ========================================
+
+        let selectedCropType = 'portrait';
+        let selectedFiles = [];
+        let currentBlob = null;
+        let currentFileName = '';
+        let currentIndex = 0;
+        let totalFiles = 0;
+        let resolvePreview = null;
+        let faceDetectionReady = false;
+
+        // ========================================
+        // FACE DETECTION (face-api.js)
+        // ========================================
+
+        // Initialize face detection library
+        async function initFaceDetection() {
+            try {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                faceDetectionReady = true;
+            } catch (error) {
+                console.warn('Face detection failed to load:', error);
+            }
+        }
+
+        // Initialize on page load
+        initFaceDetection();
+
+        // Detect face using face-api.js
+        async function detectFace(img) {
+            if (!faceDetectionReady) return null;
+
+            try {
+                const options = new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 416,
+                    scoreThreshold: 0.5
+                });
+
+                const detection = await faceapi.detectSingleFace(img, options);
+
+                if (detection) {
+                    const box = detection.box;
+                    return {
+                        x: box.x / img.width,
+                        y: box.y / img.height,
+                        width: box.width / img.width,
+                        height: box.height / img.height,
+                        centerX: (box.x + box.width / 2) / img.width,
+                        centerY: (box.y + box.height / 2) / img.height
+                    };
+                }
+            } catch (error) {
+                console.error('Face detection error:', error);
+            }
+
+            return null;
+        }
+
+        // Calculate crop box (cover-style)
+        function calculateCropFromFace(face, imgWidth, imgHeight) {
+            const targetRatio = 700 / 850;
+            const imageRatio = imgWidth / imgHeight;
+
+            let cropWidth, cropHeight;
+
+            if (imageRatio > targetRatio) {
+                cropHeight = imgHeight;
+                cropWidth = cropHeight * targetRatio;
+            } else {
+                cropWidth = imgWidth;
+                cropHeight = cropWidth / targetRatio;
+            }
+
+            const relCropWidth = cropWidth / imgWidth;
+            const relCropHeight = cropHeight / imgHeight;
+
+            let left = face.centerX - (relCropWidth / 2);
+            let top = face.centerY - (relCropHeight * 0.25);
+
+            if (left < 0) left = 0;
+            if (left + relCropWidth > 1) left = 1 - relCropWidth;
+            if (top < 0) top = 0;
+            if (top + relCropHeight > 1) top = 1 - relCropHeight;
+
+            return { left, top, width: relCropWidth, height: relCropHeight };
+        }
+
+        // ========================================
+        // FILE HANDLING
+        // ========================================
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+
+            // Validate files
+            const validFiles = files.filter(file => {
+                // Check if it's an image
+                if (!file.type.startsWith('image/')) {
+                    alert(`${file.name} is not an image file`);
+                    return false;
+                }
+
+                // Check size (max 10MB)
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert(`${file.name} is too large (max 10MB)`);
+                    return false;
+                }
+
+                return true;
+            });
+
+            selectedFiles = validFiles;
+            const fileCount = selectedFiles.length;
+            const fileText = document.getElementById('fileInputText');
+            const label = document.querySelector('.file-input-label');
+
+            // Remove existing file size display if any
+            const existingSize = label.querySelector('.file-size');
+            if (existingSize) existingSize.remove();
+
+            if (fileCount > 0) {
+                fileText.textContent = `${fileCount} file${fileCount > 1 ? 's' : ''} selected`;
+
+                // Calculate total size
+                const totalSize = validFiles.reduce((sum, file) => sum + file.size, 0);
+
+                // Format size
+                let sizeText;
+                if (totalSize < 1024) {
+                    sizeText = `${totalSize} B`;
+                } else if (totalSize < 1024 * 1024) {
+                    sizeText = `${(totalSize / 1024).toFixed(1)} KB`;
+                } else if (totalSize < 1024 * 1024 * 1024) {
+                    sizeText = `${(totalSize / (1024 * 1024)).toFixed(1)} MB`;
+                } else {
+                    sizeText = `${(totalSize / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                }
+
+                // Add file size display
+                const sizeSpan = document.createElement('span');
+                sizeSpan.className = 'file-size';
+                sizeSpan.textContent = sizeText;
+                label.appendChild(sizeSpan);
+            } else {
+                fileText.textContent = 'Select files to upload';
+            }
+        });
+
+        // Crop type selection (currently only portrait available)
+        function selectCropType(element) {
+            document.querySelectorAll('.crop-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedCropType = element.dataset.cropType;
+        }
+
+        // ========================================
+        // IMAGE PROCESSING
+        // ========================================
+
+        // Process a single image with face detection
+        async function processSingleImage(file, index, total) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const reader = new FileReader();
+
+                reader.onload = async function(e) {
+                    img.onload = async function() {
+                        try {
+                            let cropBox;
+                            const face = await detectFace(img);
+
+                            if (face) {
+                                const coords = calculateCropFromFace(face, img.width, img.height);
+                                cropBox = {
+                                    left: coords.left * img.width,
+                                    top: coords.top * img.height,
+                                    width: coords.width * img.width,
+                                    height: coords.height * img.height
+                                };
+                            } else {
+                                const targetRatio = 700 / 850;
+                                let cropWidth = img.width * 0.9;
+                                let cropHeight = cropWidth / targetRatio;
+
+                                if (cropHeight > img.height) {
+                                    cropHeight = img.height;
+                                    cropWidth = cropHeight * targetRatio;
+                                }
+
+                                cropBox = {
+                                    left: (img.width - cropWidth) / 2,
+                                    top: 0,
+                                    width: cropWidth,
+                                    height: cropHeight
+                                };
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = 700;
+                            canvas.height = 850;
+
+                            ctx.drawImage(
+                                img,
+                                cropBox.left, cropBox.top, cropBox.width, cropBox.height,
+                                0, 0, canvas.width, canvas.height
+                            );
+
+                            // Convert to blob and show preview
+                            canvas.toBlob(async function(blob) {
+                                const fileName = file.name.replace(/\.[^/.]+$/, '');
+                                const approved = await showPreview(blob, fileName, index + 1, total);
+
+                                if (approved) {
+                                    resolve(true);
+                                } else {
+                                    resolve(false);
+                                }
+                            }, 'image/jpeg', 0.9);
+
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+
+                    img.onerror = function() {
+                        reject(new Error(`Failed to load ${file.name}`));
+                    };
+
+                    img.src = e.target.result;
+                };
+
+                reader.onerror = function() {
+                    reject(new Error(`Failed to read ${file.name}`));
+                };
+
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Process all selected images
+        async function processImages() {
+            if (selectedFiles.length === 0) {
+                alert('Please select images first!');
+                return;
+            }
+
+            const processBtn = document.querySelector('.process-btn');
+            const originalText = processBtn.innerHTML;
+
+            try {
+                // Disable button and show progress
+                processBtn.disabled = true;
+                processBtn.style.opacity = '0.6';
+                processBtn.style.cursor = 'not-allowed';
+
+                const processedResults = [];
+
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    processBtn.textContent = `Processing ${i + 1}/${selectedFiles.length}...`;
+                    const result = await processSingleImage(selectedFiles[i], i, selectedFiles.length);
+                    processedResults.push(result);
+                }
+
+                // Count approved images
+                const approved = processedResults.filter(r => r).length;
+                const rejected = processedResults.filter(r => !r).length;
+
+                if (approved > 0) {
+                    alert(`✅ Approved and downloaded ${approved} image(s)!\n${rejected > 0 ? `Rejected: ${rejected}` : ''}\n\nCheck your Downloads folder.`);
+                } else {
+                    alert('All images were rejected.');
+                }
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                processBtn.disabled = false;
+                processBtn.style.opacity = '1';
+                processBtn.style.cursor = 'pointer';
+                processBtn.textContent = 'Process images';
+            }
+        }
+
+        // Preview Modal Functions
+        function showPreview(blob, fileName, index, total) {
+            return new Promise((resolve) => {
+                currentBlob = blob;
+                currentFileName = `${fileName}_${selectedCropType}.jpg`;
+                currentIndex = index;
+                totalFiles = total;
+                resolvePreview = resolve;
+
+                // Show preview image
+                const url = URL.createObjectURL(blob);
+                document.getElementById('previewImage').src = url;
+
+                // Update info
+                document.getElementById('previewInfo').textContent =
+                    `Image ${index} of ${total} • ${selectedCropType} mode • 700x850`;
+
+                // Show modal
+                document.getElementById('previewModal').classList.add('active');
+            });
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
+            URL.revokeObjectURL(document.getElementById('previewImage').src);
+        }
+
+        function approveImage() {
+            // Download the image
+            const url = URL.createObjectURL(currentBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            closePreview();
+            if (resolvePreview) resolvePreview(true);
+        }
+
+        function rejectImage() {
+            closePreview();
+            if (resolvePreview) resolvePreview(false);
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('previewModal').classList.contains('active')) {
+                rejectImage();
+            }
+        });
+    </script>
+</body>
+</html>
