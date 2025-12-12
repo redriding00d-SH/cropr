@@ -2,6 +2,8 @@
 
 Professional headshot batch processor with AI-powered face detection.
 
+![CropR Interface](assets/screenshot.png)
+
 ## Features
 
 - 🤖 **AI Face Detection** - Automatic face-centered cropping
