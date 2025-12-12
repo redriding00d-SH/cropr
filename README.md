@@ -1,8 +1,9 @@
 # CropR
 
-Professional headshot batch processor with AI-powered face detection.
+Headshot batch processor with AI-powered face detection. Useful for creating quick assets for web.
 
-![CropR Interface](assets/screenshot.png)
+Prototyped in Figma
+![CropR Interface](assets/prototype.png)
 
 ## Features
 
